@@ -9,7 +9,7 @@ services:
       dockerfile: ./Dockerfile
       args:
         STATIC_URL: '/static/'
-    restart: unless-stopped
+    restart: always
     networks:
       - saleor-backend-tier
     depends_on:
@@ -26,38 +26,42 @@ services:
     env_file: common.env
     environment:
       - JAEGER_AGENT_HOST=jaeger
-      - STOREFRONT_URL=http://localhost:3000/
-      - DASHBOARD_URL=http://localhost:9000/
-
+      - STOREFRONT_URL=http://${HOST_NAME}:80/
+      - DASHBOARD_URL=http://${HOST_NAME}:9000/
+      - ALLOWED_HOSTS=${HOST_NAME}
   storefront:
     build:
       context: ./saleor-storefront
-      dockerfile: ./Dockerfile.dev
+      dockerfile: ./Dockerfile
+      args:
+        API_URI: http://${HOST_NAME}:8000/graphql/
+        GTM_ID: ${GTM_ID}
     ports:
-      - 3000:3000
-    restart: unless-stopped
+      - 80:80
+    restart: always
     volumes:
-      - ./saleor-storefront/:/app:cached
       - /app/node_modules/
-    command: npm start -- --host 0.0.0.0
-
   dashboard:
     build:
       context: ./saleor-dashboard
-      dockerfile: ./Dockerfile.dev
+      dockerfile: ./Dockerfile
+      args:
+        API_URI: http://${HOST_NAME}:8000/graphql/
     ports:
       - 9000:9000
-    restart: unless-stopped
+    restart: always
     volumes:
-      - ./saleor-dashboard/:/app:cached
+      # - ./saleor-dashboard/:/app:cached
       - /app/node_modules/
-    command: npm start -- --host 0.0.0.0
+    environment:
+      - API_URI=http://${HOST_NAME}:8000/graphql/
+
 
   db:
     image: library/postgres:11.1-alpine
     ports:
       - 5432:5432
-    restart: unless-stopped
+    restart: always
     networks:
       - saleor-backend-tier
     volumes:
@@ -70,7 +74,7 @@ services:
     image: library/redis:5.0-alpine
     ports:
       - 6379:6379
-    restart: unless-stopped
+    restart: always
     networks:
       - saleor-backend-tier
     volumes:
@@ -83,7 +87,7 @@ services:
       args:
         STATIC_URL: '/static/'
     command: celery -A saleor --app=saleor.celeryconf:app worker --loglevel=info
-    restart: unless-stopped
+    restart: always
     networks:
       - saleor-backend-tier
     env_file: common.env
@@ -108,16 +112,16 @@ services:
       - "16686:16686"
       - "14268:14268"
       - "9411:9411"
-    restart: unless-stopped
+    restart: always
     networks:
       - saleor-backend-tier
 
   mailhog:
     image: mailhog/mailhog
-    ports: 
+    ports:
       - 1025:1025 # smtp server
-      - 8025:8025 # web ui. Visit http://localhost:8025/ to check emails
-    restart: unless-stopped
+      - 8025:8025 # web ui. Visit http://{$HOST_NAME}:8025/ to check emails
+    restart: always
     networks:
       - saleor-backend-tier
 

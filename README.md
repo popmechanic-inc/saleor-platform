@@ -26,28 +26,33 @@ $ git clone https://github.com/mirumee/saleor-platform.git --recursive --jobs 3
 $ cd saleor-platform
 ```
 
-4. Build the application:
+4. Copy nginx configs (don't forget about .env HOST_NAME variable)
+```
+$ bash update-nginx-conf.sh
+```
+
+5. Build the application:
 ```
 $ docker-compose build
 ```
 
-5. Apply Django migrations:
+6. Apply Django migrations:
 ```
 $ docker-compose run --rm api python3 manage.py migrate
 ```
 
-6. Collect static files:
+7. Collect static files:
 ```
 $ docker-compose run --rm api python3 manage.py collectstatic --noinput
 ```
 
-7. Populate the database with example data and create the admin user:
+8. Populate the database with example data and create the admin user:
 ```
 $ docker-compose run --rm api python3 manage.py populatedb --createsuperuser
 ```
 *Note that `--createsuperuser` argument creates an admin account for `admin@example.com` with the password set to `admin`.*
 
-8. Run the application:
+9. Run the application:
 ```
 $ docker-compose up
 ```
