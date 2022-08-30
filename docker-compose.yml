@@ -26,7 +26,8 @@ services:
     env_file: common.env
     environment:
       - JAEGER_AGENT_HOST=jaeger
-      - STOREFRONT_URL=http://${HOST_NAME}:80/
+      - STOREFRONT_URL=https://${HOST_NAME}/
+      - MEDIA_URL=https://${HOST_NAME}/media/
       - DASHBOARD_URL=http://${HOST_NAME}:9000/
       - ALLOWED_HOSTS=${HOST_NAME}
   storefront:
@@ -34,10 +35,10 @@ services:
       context: ./saleor-storefront
       dockerfile: ./Dockerfile
       args:
-        API_URI: http://${HOST_NAME}:8000/graphql/
+        API_URI: https://${HOST_NAME}/graphql/
         GTM_ID: ${GTM_ID}
     ports:
-      - 80:80
+      - 3000:3000
     restart: always
     volumes:
       - /app/node_modules/
@@ -59,8 +60,6 @@ services:
 
   db:
     image: library/postgres:11.1-alpine
-    ports:
-      - 5432:5432
     restart: always
     networks:
       - saleor-backend-tier
@@ -72,8 +71,6 @@ services:
 
   redis:
     image: library/redis:5.0-alpine
-    ports:
-      - 6379:6379
     restart: always
     networks:
       - saleor-backend-tier
@@ -104,23 +101,12 @@ services:
 
   jaeger:
     image: jaegertracing/all-in-one
-    ports:
-      - "5775:5775/udp"
-      - "6831:6831/udp"
-      - "6832:6832/udp"
-      - "5778:5778"
-      - "16686:16686"
-      - "14268:14268"
-      - "9411:9411"
     restart: always
     networks:
       - saleor-backend-tier
 
   mailhog:
     image: mailhog/mailhog
-    ports:
-      - 1025:1025 # smtp server
-      - 8025:8025 # web ui. Visit http://{$HOST_NAME}:8025/ to check emails
     restart: always
     networks:
       - saleor-backend-tier
